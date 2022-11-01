@@ -1,7 +1,8 @@
 import sys
 from _typeshed import Self
+from abc import abstractmethod
 from time import struct_time
-from typing import ClassVar, NamedTuple, NoReturn, SupportsAbs, TypeVar, overload
+from typing import ClassVar, NamedTuple, NoReturn, TypeVar, overload
 from typing_extensions import Literal, TypeAlias, final
 
 if sys.version_info >= (3, 11):
@@ -15,8 +16,11 @@ MINYEAR: Literal[1]
 MAXYEAR: Literal[9999]
 
 class tzinfo:
+    @abstractmethod
     def tzname(self, __dt: datetime | None) -> str | None: ...
+    @abstractmethod
     def utcoffset(self, __dt: datetime | None) -> timedelta | None: ...
+    @abstractmethod
     def dst(self, __dt: datetime | None) -> timedelta | None: ...
     def fromutc(self, __dt: datetime) -> datetime: ...
 
@@ -29,6 +33,9 @@ class timezone(tzinfo):
     min: ClassVar[timezone]
     max: ClassVar[timezone]
     def __init__(self, offset: timedelta, name: str = ...) -> None: ...
+    def tzname(self, __dt: datetime | None) -> str: ...
+    def utcoffset(self, __dt: datetime | None) -> timedelta: ...
+    def dst(self, __dt: datetime | None) -> None: ...
 
 if sys.version_info >= (3, 11):
     UTC: timezone
@@ -152,7 +159,7 @@ class time:
 _Date: TypeAlias = date
 _Time: TypeAlias = time
 
-class timedelta(SupportsAbs[timedelta]):
+class timedelta:
     min: ClassVar[timedelta]
     max: ClassVar[timedelta]
     resolution: ClassVar[timedelta]
@@ -201,7 +208,6 @@ class timedelta(SupportsAbs[timedelta]):
 class datetime(date):
     min: ClassVar[datetime]
     max: ClassVar[datetime]
-    resolution: ClassVar[timedelta]
     def __new__(
         cls: type[Self],
         year: int,
@@ -249,8 +255,6 @@ class datetime(date):
     def utcnow(cls: type[Self]) -> Self: ...
     @classmethod
     def combine(cls, date: _Date, time: _Time, tzinfo: _TzInfo | None = ...) -> datetime: ...
-    @classmethod
-    def fromisoformat(cls: type[Self], __date_string: str) -> Self: ...
     def timestamp(self) -> float: ...
     def utctimetuple(self) -> struct_time: ...
     def date(self) -> _Date: ...
@@ -274,7 +278,6 @@ class datetime(date):
     else:
         def astimezone(self, tz: _TzInfo | None = ...) -> datetime: ...
 
-    def ctime(self) -> str: ...
     def isoformat(self, sep: str = ..., timespec: str = ...) -> str: ...
     @classmethod
     def strptime(cls, __date_string: str, __format: str) -> datetime: ...
@@ -298,7 +301,3 @@ class datetime(date):
         def __sub__(self, __other: datetime) -> timedelta: ...
         @overload
         def __sub__(self, __other: timedelta) -> datetime: ...
-    if sys.version_info >= (3, 9):
-        def isocalendar(self) -> _IsoCalendarDate: ...
-    else:
-        def isocalendar(self) -> tuple[int, int, int]: ...

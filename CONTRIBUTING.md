@@ -102,7 +102,8 @@ black .
 ...Or install the pre-commit hooks: please refer to the
 [pre-commit](https://pre-commit.com/) documentation.
 
-Our code is also linted using `flake8`, with plugins `flake8-pyi` and `flake8-bugbear`. As with our other checks, running
+Our code is also linted using `flake8`, with plugins `flake8-pyi`,
+`flake8-bugbear`, and `flake8-noqa`. As with our other checks, running
 flake8 before filing a PR is not required. However, if you wish to run flake8
 locally, install the test dependencies as outlined above, and then run:
 
@@ -285,6 +286,15 @@ Two exceptions are `Protocol` and `runtime_checkable`: although
 these were added in Python 3.8, they can be used in stubs regardless
 of Python version.
 
+[PEP 688](https://www.python.org/dev/peps/pep-0688/), which is
+currently a draft, removes the implicit promotion of the
+`bytearray` and `memoryview` classes to `bytes`.
+Typeshed stubs should be written assuming that this proposal
+is accepted, so a parameter that accepts either `bytes` or
+`bytearray` should be typed as `bytes | bytearray`.
+Often one of the aliases from `_typeshed`, such as
+`_typeshed.ReadableBuffer`, can be used instead.
+
 ### What to include
 
 Stubs should include the complete interface (classes, functions,
@@ -351,7 +361,7 @@ follow the following guidelines:
   `# incomplete` comment (see example below).
 * Partial modules (i.e. modules that are missing some or all classes,
   functions, or attributes) must include a top-level `__getattr__()`
-  function marked with an `# incomplete` comment (see example below).
+  function marked with an `Incomplete` return type (see example below).
 * Partial packages (i.e. packages that are missing one or more sub-modules)
   must have a `__init__.pyi` stub that is marked as incomplete (see above).
   A better alternative is to create empty stubs for all sub-modules and
@@ -361,14 +371,16 @@ Example of a partial module with a partial class `Foo` and a partially
 annotated function `bar()`:
 
 ```python
-def __getattr__(name: str) -> Any: ...  # incomplete
+from _typeshed import Incomplete
 
 class Foo:
-    def __getattr__(self, name: str) -> Any: ...  # incomplete
+    def __getattr__(self, name: str) -> Incomplete: ...
     x: int
     y: str
 
 def bar(x: str, y, *, z=...): ...
+
+def __getattr__(name: str) -> Incomplete: ...
 ```
 
 ## Stub file coding style
@@ -426,8 +438,7 @@ checker, and leave out unnecessary detail:
 
 Some further tips for good type hints:
 * use built-in generics (`list`, `dict`, `tuple`, `set`), instead
-  of importing them from `typing`, **except** in type aliases, in base classes, and for
-  arbitrary length tuples (`Tuple[int, ...]`);
+  of importing them from `typing`.
 * use `X | Y` instead of `Union[X, Y]` and `X | None`, instead of
   `Optional[X]`, **except** when it is not possible due to mypy bugs (type aliases and base classes);
 * in Python 3 stubs, import collections (`Mapping`, `Iterable`, etc.)
